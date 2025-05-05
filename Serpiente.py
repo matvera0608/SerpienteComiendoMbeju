@@ -3,12 +3,16 @@ import time
 import random
 import pygame
 import sys
+import os
 
 posponer = 1/10
 
 #Contador de números
 score = 0
 high_score = 0
+ubicación = os.path.dirname(os.path.abspath(__file__))
+mbeju = os.path.join(ubicación, 'mbeju.gif')
+serpienteComiendoMbeju = os.path.join(ubicación, "eat.wav")
 
 #La pluma
 pluma = turtle.Turtle()
@@ -48,13 +52,6 @@ def mensaje_de_error(mensaje):
     sys.exit()
 
 
-#Crearé un código para manejar excepciones a la carga de archivo
-try:
-    turtle.register_shape("C:\\Users\\veram\\OneDrive\\Documentos\\Python\\Programms\\mbejú.gif")
-except turtle.TurtleGraphicsError:
-    mensaje_de_error("La imagen no se cargó correctamente")
-
-
 #La cabeza de serpiente
 cabeza = turtle.Turtle()
 cabeza.speed(0)
@@ -67,7 +64,7 @@ cabeza.direction = "stop"
 #La comida
 comida = turtle.Turtle()
 comida.speed(0)
-comida.shape("C:\\Users\\veram\\OneDrive\\Documentos\\Python\\Programms\\mbejú.gif")
+comida.shape(mbeju)
 comida.penup()
 comida.goto(0,100)
 
@@ -135,10 +132,18 @@ ven.onkeypress(derecha, "Right")
 ven.onkeypress(izquierda, "Left")
 
 
+#Posibles excepciones que surgen. AQUÍ ES REGIÓN DE EXCEPCIONES
+#Crearé un código para manejar excepciones a la carga de archivo
+try:
+    turtle.register_shape(os.path.join(ubicación, 'mbeju.gif'))
+    comida.shape(os.path.join(ubicación, 'mbeju.gif'))
+except turtle.TurtleGraphicsError:
+    mensaje_de_error("La imagen no se cargó correctamente")
+
 #Sonido para el juego
 try:
     pygame.mixer.init()
-    comer = pygame.mixer.Sound(r"C:\Users\veram\OneDrive\Documentos\Python\Programms\eat.wav")
+    comer = pygame.mixer.Sound(serpienteComiendoMbeju)
 except pygame.error as e:
     mensaje_de_error(f"No se cargó el audio correctamente o no existe el mismo: {e}")
 
