@@ -7,12 +7,19 @@ import os
 
 posponer = 1/10
 
-#Contador de números
+#Contador de números e intento
 score = 0
 high_score = 0
-ubicación = os.path.dirname(os.path.abspath(__file__))
-mbeju = os.path.join(ubicación, 'mbeju.gif')
+intento = 0
+intentoMáx = 5
+juegoPerdido = False
+
+#Ubicación de los archivos necesarios
+ubicación = os.path.dirname(__file__)
+mbeju = os.path.join(ubicación, "mbeju.gif")
 serpienteComiendoMbeju = os.path.join(ubicación, "eat.wav")
+
+
 
 #La pluma
 pluma = turtle.Turtle()
@@ -50,6 +57,20 @@ def mensaje_de_error(mensaje):
         pygame.display.flip()
     pygame.quit()
     sys.exit()
+
+#Posibles excepciones que surgen. AQUÍ ES REGIÓN DE EXCEPCIONES
+#Crearé un código para manejar excepciones a la carga de archivo
+try:
+    turtle.register_shape(mbeju)
+except turtle.TurtleGraphicsError as e:
+    mensaje_de_error("La imagen no se cargó correctamente", e)
+
+#Sonido para el juego
+try:
+    pygame.mixer.init()
+    comer = pygame.mixer.Sound(serpienteComiendoMbeju)
+except pygame.error as e:
+    mensaje_de_error(f"No se cargó el audio correctamente o no existe el mismo: {e}")
 
 
 #La cabeza de serpiente
@@ -131,30 +152,10 @@ ven.onkeypress(abajo, "Down")
 ven.onkeypress(derecha, "Right")
 ven.onkeypress(izquierda, "Left")
 
-
-#Posibles excepciones que surgen. AQUÍ ES REGIÓN DE EXCEPCIONES
-#Crearé un código para manejar excepciones a la carga de archivo
-try:
-    turtle.register_shape(os.path.join(ubicación, 'mbeju.gif'))
-    comida.shape(os.path.join(ubicación, 'mbeju.gif'))
-except turtle.TurtleGraphicsError:
-    mensaje_de_error("La imagen no se cargó correctamente")
-
-#Sonido para el juego
-try:
-    pygame.mixer.init()
-    comer = pygame.mixer.Sound(serpienteComiendoMbeju)
-except pygame.error as e:
-    mensaje_de_error(f"No se cargó el audio correctamente o no existe el mismo: {e}")
-
-
-
-#Este mientras está en infinito
-
-#Lo que voy a hacer a continuación es crear un bucle que repita solamente 5 veces el juego
-#y luego se detenga, para que no se repita el juego infinitamente
-
-for i in range(5):
+#Lo que voy a hacer a continuación es crear una función para iniciar el juego
+#tanta cantidad de veces que deseo yo
+def iniciar_juego():
+    global high_score
     ven.update()
     #Colisión de borde
     colisión_de_cabeza_positive_axe_x = cabeza.xcor() > anchura - 80
@@ -220,7 +221,13 @@ for i in range(5):
         y = cabeza.ycor()
         segmentos[0].goto(x,y)
     mov()
-    #Colisión con el cuerpo
+    reiniciar_juego()
+    
+
+#Aquí voy a crear una función llamada reiniciar_juego() para que pueda reiniciar
+#sin que se inicie el juego pero se cierre durante 5 segundos
+def reiniciar_juego():
+    global score, high_score, juegoPerdido, posponer
     for segmento in segmentos:
         if segmento.distance(cabeza) < 20:
             time.sleep(1/2)
@@ -229,7 +236,7 @@ for i in range(5):
             score = 0
             texto.clear()
             texto.goto(10,400)
-            texto.write("Resultado: {}          Resultado más alto: {}".format(score, high_score),
+            texto.write(f"Resultado: {score}          Resultado más alto: {high_score}",
                     align = "center", font =("Century", 25, "normal"))
             texto.goto(-100,-400)
             texto.write("Game made by Ramiro Mateo Vera",
@@ -238,4 +245,30 @@ for i in range(5):
             for segmento in segmentos:
                 segmento.goto(1000,1000)
             segmentos.clear()
-    time.sleep(posponer)
+            
+            juegoPerdido = True
+            time.sleep(posponer)
+            return
+
+
+#Acá recorro el juego hasta que los intentos lleguen a 5, al llegar a la cantidad
+#exacta, el juego se cierra
+def bucle_del_juego():
+    global intento, juegoPerdido
+
+    #Creo una condición para evitar cierres inesperados
+    if juegoPerdido:
+        intento += 1
+        juegoPerdido = False
+    
+    
+    if intento >= intentoMáx:
+        turtle.bye()
+        return
+    
+    reiniciar_juego()
+    iniciar_juego()
+    ven.ontimer(bucle_del_juego, 500)
+
+bucle_del_juego()
+turtle.mainloop()
